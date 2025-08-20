@@ -1,0 +1,47 @@
+{
+  "agent": {},
+  "traces": {
+    "traces_collected": {
+      "otlp": {}
+    }
+  },
+  "metrics": {
+    "metrics_collected": {
+      "prometheus": {
+        "prometheus_config": {
+          "global": {
+            "scrape_interval": "1m"
+          },
+          "scrape_configs": [
+            {
+              "job_name": "app",
+              "static_configs": [
+                {
+                  "targets": ["localhost:8080"],
+                  "labels": {
+                    "service": "test-service",
+                    "cluster": "local-test",
+                    "platform": "ecs-fargate",
+                    "region": "eu-west-2"
+                  }
+                }
+              ],
+              "metrics_path": "/actuator/prometheus"
+            }
+          ]
+        }
+      },
+      "ecs": {
+        "metrics_collection_interval": 60,
+        "container_insights": {
+          "enabled": true
+        }
+      }
+    },
+    "metrics_destinations": {
+      "amp": {
+        "workspace_id": "ws-f79710bc-7c76-4e1b-a9af-b736a2ffc570"
+      }
+    }
+  }
+}

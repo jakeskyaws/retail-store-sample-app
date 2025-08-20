@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  cloudwatch-agent:
+    image: public.ecr.aws/cloudwatch-agent/cloudwatch-agent:latest
+    environment:
+      - AWS_REGION=eu-west-2
+    volumes:
+      - ./test-cw-agent.json:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    command: ["/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent", "-c", "file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"]

@@ -28,6 +28,35 @@ resource "aws_iam_role_policy_attachment" "task_execution_role_additional" {
   policy_arn = var.additional_task_execution_role_iam_policy_arns[count.index]
 }
 
+resource "aws_iam_policy" "task_execution_ssm" {
+  count       = var.opentelemetry_enabled ? 1 : 0
+  name        = "${var.environment_name}-${var.service_name}-execution-ssm"
+  description = "SSM parameter access for task execution role"
+  tags        = var.tags
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters"
+        ]
+        Resource = [
+          "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.environment_name}/${var.service_name}/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "task_execution_ssm" {
+  count      = var.opentelemetry_enabled ? 1 : 0
+  role       = aws_iam_role.task_execution_role.name
+  policy_arn = aws_iam_policy.task_execution_ssm[0].arn
+}
+
 resource "aws_iam_role" "task_role" {
   name               = "${var.environment_name}-${var.service_name}-task"
   assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
@@ -94,8 +123,27 @@ resource "aws_iam_policy" "cloudwatch_agent" {
         ]
         Resource = [
           "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${var.cloudwatch_logs_group_id}:*",
-          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${var.cloudwatch_logs_group_id}:log-stream:*"
+          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${var.cloudwatch_logs_group_id}:log-stream:*",
+          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/ecs/containerinsights/${var.environment_name}*/prometheus:*"
         ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters"
+        ]
+        Resource = [
+          "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.environment_name}/${var.service_name}/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = "*"
       }
     ]
   })
@@ -139,4 +187,38 @@ resource "aws_iam_policy" "ecs_exec" {
 resource "aws_iam_role_policy_attachment" "ecs_exec" {
   role       = aws_iam_role.task_role.name
   policy_arn = aws_iam_policy.ecs_exec.arn
+}
+
+resource "aws_iam_role_policy_attachment" "amp_remote_write" {
+  count      = var.opentelemetry_enabled ? 1 : 0
+  role       = aws_iam_role.task_role.name
+  policy_arn = var.amp_remote_write_policy_arn
+}
+
+resource "aws_iam_policy" "ecs_container_insights" {
+  count = var.opentelemetry_enabled ? 1 : 0
+  name  = "${var.environment_name}-${var.service_name}-ecs-container-insights"
+  
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecs:ListTasks",
+          "ecs:DescribeTasks",
+          "ecs:DescribeContainerInstances",
+          "ec2:DescribeInstances",
+          "ecs:DescribeTaskDefinition"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_container_insights" {
+  count      = var.opentelemetry_enabled ? 1 : 0
+  role       = aws_iam_role.task_role.name
+  policy_arn = aws_iam_policy.ecs_container_insights[0].arn
 }

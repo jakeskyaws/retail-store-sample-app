@@ -21,4 +21,7 @@ module "carts_service" {
   additional_task_role_iam_policy_arns = [
     var.carts_dynamodb_policy_arn
   ]
+
+  amp_remote_write_policy_arn = aws_iam_policy.amp_remote_write.arn
+  amp_workspace_endpoint      = "${aws_prometheus_workspace.this.prometheus_endpoint}api/v1/remote_write"
 }

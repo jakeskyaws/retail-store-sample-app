@@ -33,6 +33,9 @@ module "orders_service" {
   additional_task_execution_role_iam_policy_arns = [
     aws_iam_policy.orders_policy.arn
   ]
+
+  amp_remote_write_policy_arn = aws_iam_policy.amp_remote_write.arn
+  amp_workspace_endpoint      = "${aws_prometheus_workspace.this.prometheus_endpoint}api/v1/remote_write"
 }
 
 data "aws_iam_policy_document" "orders_db_secret" {

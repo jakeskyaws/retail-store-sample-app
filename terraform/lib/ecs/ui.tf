@@ -21,4 +21,7 @@ module "ui_service" {
     RETAIL_UI_ENDPOINTS_CHECKOUT = "http://${module.checkout_service.ecs_service_name}"
     RETAIL_UI_ENDPOINTS_ORDERS   = "http://${module.orders_service.ecs_service_name}"
   }
+
+  amp_remote_write_policy_arn = aws_iam_policy.amp_remote_write.arn
+  amp_workspace_endpoint      = "${aws_prometheus_workspace.this.prometheus_endpoint}api/v1/remote_write"
 }

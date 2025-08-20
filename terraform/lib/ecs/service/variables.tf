@@ -84,3 +84,15 @@ variable "opentelemetry_enabled" {
   description = "Boolean value that enables OpenTelemetry."
   type        = bool
 }
+
+variable "amp_remote_write_policy_arn" {
+  type        = string
+  default     = ""
+  description = "ARN of the AMP remote write policy"
+}
+
+variable "amp_workspace_endpoint" {
+  type        = string
+  default     = ""
+  description = "AMP workspace remote write endpoint"
+}

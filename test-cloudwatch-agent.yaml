@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  app:
+    image: public.ecr.aws/aws-containers/retail-store-sample-ui:1.0.0
+    ports:
+      - "8080:8080"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://cloudwatch-agent:4318
+      - OTEL_SERVICE_NAME=ui
+    depends_on:
+      - cloudwatch-agent
+
+  cloudwatch-agent:
+    image: public.ecr.aws/cloudwatch-agent/cloudwatch-agent:latest
+    ports:
+      - "4318:4318"
+    environment:
+      - CW_CONFIG_CONTENT={"agent":{"region":"us-west-2"},"traces":{"traces_collected":{"otlp":{}}},"metrics":{"metrics_collected":{"prometheus":{"prometheus_config_path":"env:PROMETHEUS_CONFIG_CONTENT","metric_declaration":[{"source_labels":["job"],"label_matcher":"^app$","dimensions":[["job"]],"metric_selectors":[".*"]}]}},"namespace":"ContainerInsights/Prometheus"}}
+      - PROMETHEUS_CONFIG_CONTENT=global:\n  scrape_interval: 1m\nscrape_configs:\n- job_name: app\n  static_configs:\n  - targets: ['app:8080']\n  metrics_path: /actuator/prometheus\nremote_write:\n- url: https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-test/api/v1/remote_write\n  sigv4:\n    region: us-west-2
+      - AWS_REGION=us-west-2

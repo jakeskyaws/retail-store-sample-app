@@ -1,0 +1,23 @@
+services:
+  app:
+    image: public.ecr.aws/aws-containers/retail-store-sample-ui:1.0.0
+    ports:
+      - "8888:8080"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://cloudwatch-agent:4318
+
+  cloudwatch-agent:
+    image: public.ecr.aws/cloudwatch-agent/cloudwatch-agent:latest
+    ports:
+      - "4318:4318"
+    environment:
+      - CW_CONFIG_CONTENT={"agent":{"region":"us-west-2"},"traces":{"traces_collected":{"otlp":{}}},"metrics":{"metrics_collected":{"prometheus":{"prometheus_config_path":"env:PROMETHEUS_CONFIG_CONTENT"}},"namespace":"ContainerInsights/Prometheus"}}
+      - |
+        PROMETHEUS_CONFIG_CONTENT=global:
+          scrape_interval: 1m
+        scrape_configs:
+        - job_name: app
+          static_configs:
+          - targets: ['app:8080']
+          metrics_path: /actuator/prometheus
+      - AWS_REGION=us-west-2

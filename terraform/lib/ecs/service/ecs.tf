@@ -83,27 +83,24 @@ locals {
 
   otel_container = {
     name      = "cloudwatch-agent"
-    image     = "public.ecr.aws/cloudwatch-agent/cloudwatch-agent:latest"
+    image     = "public.ecr.aws/aws-observability/aws-otel-collector:latest"
     essential = true
-    environment = [
+
+    secrets = var.opentelemetry_enabled ? [
       {
-        name = "CW_CONFIG_CONTENT"
-        value = jsonencode({
-          agent = {}
-          traces = {
-            traces_collected = {
-              otlp = {}
-            }
-          }
-        })
+        name = "AOT_CONFIG_CONTENT"
+        valueFrom = aws_ssm_parameter.cw_config[0].arn
       }
-    ]
+    ] : []
     portMappings = [
       {
         containerPort = 4318
         protocol      = "tcp"
       }
     ]
+    mountPoints = []
+    cpu = 256
+    memory = 512
     logConfiguration = {
       logDriver = "awslogs"
       options = {
@@ -131,6 +128,12 @@ resource "aws_ecs_task_definition" "this" {
   memory                   = "2048"
   execution_role_arn       = aws_iam_role.task_execution_role.arn
   task_role_arn            = aws_iam_role.task_role.arn
+
+
+
+  depends_on = [
+    aws_ssm_parameter.cw_config
+  ]
 }
 
 resource "aws_ecs_service" "this" {
@@ -140,7 +143,6 @@ resource "aws_ecs_service" "this" {
   desired_count          = 1
   launch_type            = "FARGATE"
   enable_execute_command = true
-  wait_for_steady_state  = true
 
   network_configuration {
     security_groups  = [aws_security_group.this.id]

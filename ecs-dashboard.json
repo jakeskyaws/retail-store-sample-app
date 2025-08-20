@@ -1,0 +1,33 @@
+{
+  "dashboard": {
+    "title": "ECS Retail Store Services",
+    "panels": [
+      {
+        "title": "Services Status",
+        "type": "stat",
+        "targets": [{"expr": "up", "legendFormat": "{{job}}"}],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "title": "JVM Memory Usage",
+        "type": "timeseries", 
+        "targets": [{"expr": "jvm_memory_used_bytes", "legendFormat": "{{job}} - {{area}}"}],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "title": "HTTP Request Rate",
+        "type": "timeseries",
+        "targets": [{"expr": "rate(http_server_requests_seconds_count[5m])", "legendFormat": "{{job}} - {{uri}}"}],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "title": "Application Ready Time",
+        "type": "stat",
+        "targets": [{"expr": "application_ready_time_seconds", "legendFormat": "{{job}}"}],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      }
+    ],
+    "time": {"from": "now-1h", "to": "now"},
+    "refresh": "30s"
+  }
+}
